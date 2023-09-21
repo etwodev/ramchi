@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -19,7 +18,7 @@ func Load() error {
 		}
 	}
 
-	file, err := ioutil.ReadFile(CONFIG)
+	file, err := os.ReadFile(CONFIG)
 	if err != nil {
 		return fmt.Errorf("Load: failed reading json: %w", err)
 	}
@@ -36,14 +35,14 @@ func Create() error {
 	if err != nil {
 		return fmt.Errorf("Create: failed marshalling config: %w", err)
 	}
-	err = ioutil.WriteFile(CONFIG, file, 0644)
+	err = os.WriteFile(CONFIG, file, 0644)
 	if err != nil {
 		return fmt.Errorf("Create: failed writing config: %w", err)
 	}
 	return nil
 }
 
-func New() ( error ) {
+func New() error {
 	if c == nil {
 		err := Load()
 		if err != nil {
