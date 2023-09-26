@@ -30,6 +30,7 @@ run.sh
 
 # test binary, built with `go test -c`
 *.test
+ramchi.config.json
 
 # output of the go coverage tool, specifically when used with LiteIDE
 *.out

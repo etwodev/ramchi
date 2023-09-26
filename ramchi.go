@@ -18,22 +18,20 @@ import (
 var log zerolog.Logger
 
 type Server struct {
-	status      bool
 	idle        chan struct{}
 	middlewares []middleware.Middleware
 	routers     []router.Router
-}
-
-func (s Server) Status() bool {
-	return s.status
+	instance		*http.Server
 }
 
 func New() *Server {
+	format := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006/01/02 15:04:05"}
+	log = zerolog.New(format).With().Timestamp().Logger()
+
 	err := c.New()
 	if err != nil {
 		log.Fatal().Str("Function", "New").Err(err).Msg("Unexpected error")
 	}
-
 	return &Server{}
 }
 
@@ -46,28 +44,27 @@ func (s *Server) LoadMiddleware(middlewares []middleware.Middleware) {
 }
 
 func (s *Server) Start() {
-	instance := &http.Server{Addr: fmt.Sprintf("%s:%s", c.Address(), c.Port()), Handler: s.handler()}
-
-	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Bool("Status", s.Status()).Msg("Server started")
+	s.instance = &http.Server{Addr: fmt.Sprintf("%s:%s", c.Address(), c.Port()), Handler: s.handler()}
+	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server started")
 
 	s.idle = make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
-		if err := instance.Shutdown(context.Background()); err != nil {
+		if err := s.instance.Shutdown(context.Background()); err != nil {
 			log.Warn().Str("Function", "Shutdown").Err(err).Msg("Server shutdown failed!")
 		}
 		close(s.idle)
 	}()
 
-	if err := instance.ListenAndServe(); err != http.ErrServerClosed {
+	if err := s.instance.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal().Str("Function", "ListenAndServe").Err(err).Msg("Unexpected error")
 	}
 
 	<-s.idle
 
-	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Bool("Status", s.Status()).Msg("Server stopped")
+	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server stopped")
 }
 
 func Handle(err error, function string) {
@@ -80,7 +77,7 @@ func (s *Server) handler() *chi.Mux {
 	m := chi.NewMux()
 	for _, middleware := range s.middlewares {
 		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
-			log.Info().Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middlewear")
+			log.Info().Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middleware")
 			m.Use(middleware.Method())
 		}
 	}
