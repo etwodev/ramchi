@@ -40,7 +40,9 @@ func TestBasicServer(t *testing.T) {
 		res, _ := json.Marshal(map[string]string{"success": "ping"})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(201)
-		w.Write(res)
+		if _, err := w.Write(res); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	testRoutes := func() []router.Route {
