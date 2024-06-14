@@ -83,7 +83,7 @@ func (s *Server) handler() *chi.Mux {
 func (s *Server) initMux(m *chi.Mux) {
 	for _, middleware := range s.middlewares {
 		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
-			log.Debug().Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middleware")
+			log.Debug().Str("Name", middleware.Name()).Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middleware")
 			m.Use(middleware.Method())
 		}
 	}

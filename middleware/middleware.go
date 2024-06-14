@@ -5,9 +5,11 @@ import (
 )
 
 type Middleware interface {
-	Method()  func(http.Handler) http.Handler
+	Method() func(http.Handler) http.Handler
 	// Status returns whether the middleware is enabled
-	Status()  bool
+	Status() bool
 	// Experimental returns whether the middleware is experimental
 	Experimental() bool
+	// Name returns the identification of the middleware
+	Name() string
 }
