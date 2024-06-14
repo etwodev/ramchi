@@ -2,6 +2,7 @@ package ramchi
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,6 +35,10 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestBasicServer(t *testing.T) {
+	const ERROR_STATUS_CODE = 418
+	const ERROR_MESSAGE = "Example error has occurred"
+	const ERROR_RESPONSE = "test error pass-through"
+
 	ts := New()
 
 	pingAll := func(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +50,14 @@ func TestBasicServer(t *testing.T) {
 		}
 	}
 
+	errorAll := func(w http.ResponseWriter, r *http.Request) {
+		Handle(w, "errorAll", errors.New(ERROR_RESPONSE), ERROR_MESSAGE, ERROR_STATUS_CODE)
+	}
+
 	testRoutes := func() []router.Route {
 		return []router.Route{
 			router.NewGetRoute("/ping", true, false, pingAll),
+			router.NewGetRoute("/error", true, false, errorAll),
 		}
 	}
 
@@ -63,6 +73,11 @@ func TestBasicServer(t *testing.T) {
 	defer instance.Close()
 
 	if _, body := testRequest(t, instance, http.MethodGet, "/ping", nil); body != `{"success":"ping"}` {
+		t.Fatalf(body)
+	}
+
+	
+	if _, body := testRequest(t, instance, http.MethodGet, "/error", nil); body != "I'm a teapot\u000a" {
 		t.Fatalf(body)
 	}
 }

@@ -21,11 +21,11 @@ type Server struct {
 	idle        chan struct{}
 	middlewares []middleware.Middleware
 	routers     []router.Router
-	instance		*http.Server
+	instance    *http.Server
 }
 
 func New() *Server {
-	format := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006/01/02 15:04:05"}
+	format := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02T15:04:05"}
 	log = zerolog.New(format).With().Timestamp().Logger()
 
 	err := c.New()
@@ -67,9 +67,10 @@ func (s *Server) Start() {
 	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server stopped")
 }
 
-func Handle(err error, function string) {
+func Handle(w http.ResponseWriter, function string, err error, msg string, code int) {
 	if err != nil {
-		log.Error().Str("Function", function).Err(err).Msg("Unexpected error")
+		log.Error().Str("Function", function).Str("Status", http.StatusText(code)).Err(err).Msg(msg)
+		http.Error(w, http.StatusText(code), code)
 	}
 }
 
