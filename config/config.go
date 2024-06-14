@@ -31,7 +31,7 @@ func Load() error {
 }
 
 func Create() error {
-	file, err := json.MarshalIndent(&Config{Port: "8080", Address: "localhost", Experimental: false}, "", " ")
+	file, err := json.MarshalIndent(&Config{Port: "7000", Address: "0.0.0.0", Experimental: false}, "", " ")
 	if err != nil {
 		return fmt.Errorf("Create: failed marshalling config: %w", err)
 	}
