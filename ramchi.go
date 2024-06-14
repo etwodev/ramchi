@@ -26,7 +26,7 @@ type Server struct {
 
 func New() *Server {
 	format := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02T15:04:05"}
-	log = zerolog.New(format).With().Timestamp().Logger()
+	log = zerolog.New(format).With().Timestamp().Str("Group", "ramchi").Logger()
 
 	err := c.New()
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *Server) LoadMiddleware(middlewares []middleware.Middleware) {
 
 func (s *Server) Start() {
 	s.instance = &http.Server{Addr: fmt.Sprintf("%s:%s", c.Address(), c.Port()), Handler: s.handler()}
-	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server started")
+	log.Debug().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server started")
 
 	s.idle = make(chan struct{})
 	go func() {
@@ -64,7 +64,7 @@ func (s *Server) Start() {
 
 	<-s.idle
 
-	log.Info().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server stopped")
+	log.Debug().Str("Port", c.Port()).Str("Address", c.Address()).Bool("Experimental", c.Experimental()).Msg("Server stopped")
 }
 
 func Handle(w http.ResponseWriter, function string, err error, msg string, code int) {
@@ -76,22 +76,23 @@ func Handle(w http.ResponseWriter, function string, err error, msg string, code 
 
 func (s *Server) handler() *chi.Mux {
 	m := chi.NewMux()
-	for _, middleware := range s.middlewares {
-		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
-			log.Info().Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middleware")
-			m.Use(middleware.Method())
-		}
-	}
 	s.initMux(m)
 	return m
 }
 
 func (s *Server) initMux(m *chi.Mux) {
+	for _, middleware := range s.middlewares {
+		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
+			log.Debug().Bool("Experimental", middleware.Experimental()).Bool("Status", middleware.Status()).Msg("Registering middleware")
+			m.Use(middleware.Method())
+		}
+	}
+
 	for _, router := range s.routers {
 		if router.Status() {
 			for _, r := range router.Routes() {
 				if r.Status() && (r.Experimental() == c.Experimental() || !r.Experimental()) {
-					log.Info().Bool("Experimental", r.Experimental()).Bool("Status", r.Status()).Str("Method", r.Method()).Str("Path", r.Path()).Msg("Registering route")
+					log.Debug().Bool("Experimental", r.Experimental()).Bool("Status", r.Status()).Str("Method", r.Method()).Str("Path", r.Path()).Msg("Registering route")
 					m.Method(r.Method(), r.Path(), r.Handler())
 				}
 			}
