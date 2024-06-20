@@ -5,16 +5,16 @@ import (
 )
 
 type preRouter struct {
-	status 			bool
-	routes  		[]Route
+	status bool
+	routes []Route
 }
 
 type preRoute struct {
-	method  string
-	path    string
-	status  bool
+	method       string
+	path         string
+	status       bool
 	experimental bool
-	handler http.HandlerFunc
+	handler      http.HandlerFunc
 }
 
 // RouterWrapper wraps a router with extra functionality .

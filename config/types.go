@@ -3,7 +3,7 @@ package config
 type Config struct {
 	Port         string `json:"port"`
 	Address      string `json:"address"`
-	Experimental bool	 `json:"experimental"`
+	Experimental bool   `json:"experimental"`
 }
 
 func Port() string {
