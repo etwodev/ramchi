@@ -5,23 +5,27 @@ import (
 )
 
 type Router interface {
-	// Returns the list of all routes
+	// Routes returns all registered routes
 	Routes() []Route
-	// Is the router enabled
+	// Status returns whether the router is active
 	Status() bool
-	// The router prefix
+	// Prefix returns the base path
 	Prefix() string
+	// Middleware returns router-level middleware
+	Middleware() []func(http.Handler) http.Handler
 }
 
 type Route interface {
-	// Handler returns the function the route applies
+	// Handler is the HTTP handler function
 	Handler() http.HandlerFunc
-	// Method returns the http method the route corresponds to
+	// Method is the HTTP verb (GET, POST, etc.)
 	Method() string
-	// Path returns the subpath where the route responds
+	// Path is the relative route path
 	Path() string
-	// Status returns whether the route is enabled
+	// Status returns whether the route is active
 	Status() bool
 	// Experimental returns whether the route is experimental
 	Experimental() bool
+	// Middleware returns route-level middleware
+	Middleware() []func(http.Handler) http.Handler
 }
