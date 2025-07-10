@@ -67,7 +67,12 @@ func TestBasicServer(t *testing.T) {
 		res, _ := json.Marshal(map[string]string{"success": "ping"})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(201)
-		w.Write(res)
+
+		_, err := w.Write(res)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 	}
 
 	errorAll := func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +82,12 @@ func TestBasicServer(t *testing.T) {
 			"error":   ERROR_MESSAGE,
 			"details": ERROR_RESPONSE,
 		}
-		json.NewEncoder(w).Encode(response)
+
+		err := json.NewEncoder(w).Encode(response)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 	}
 
 	// Routes
