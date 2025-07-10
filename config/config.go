@@ -31,14 +31,34 @@ func Load() error {
 }
 
 func Create() error {
-	file, err := json.MarshalIndent(&Config{Port: "7000", Address: "0.0.0.0", Experimental: false}, "", " ")
+	defaultConfig := Config{
+		Port:                 "7000",
+		Address:              "0.0.0.0",
+		Experimental:         false,
+		ReadTimeout:          15,
+		WriteTimeout:         15,
+		IdleTimeout:          60,
+		LogLevel:             "info",
+		MaxHeaderBytes:       1048576,
+		EnableTLS:            false,
+		TLSCertFile:          "",
+		TLSKeyFile:           "",
+		ShutdownTimeout:      15,
+		EnableCORS:           false,
+		AllowedOrigins:       []string{"*"},
+		EnableRequestLogging: false,
+	}
+
+	file, err := json.MarshalIndent(&defaultConfig, "", "  ")
 	if err != nil {
 		return fmt.Errorf("Create: failed marshalling config: %w", err)
 	}
+
 	err = os.WriteFile(CONFIG, file, 0644)
 	if err != nil {
 		return fmt.Errorf("Create: failed writing config: %w", err)
 	}
+
 	return nil
 }
 
