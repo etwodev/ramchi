@@ -9,10 +9,10 @@ import (
 	"path"
 	"time"
 
-	c "github.com/Etwodev/ramchi/config"
-	"github.com/Etwodev/ramchi/log"
-	"github.com/Etwodev/ramchi/middleware"
-	"github.com/Etwodev/ramchi/router"
+	c "github.com/Etwodev/ramchi/v2/config"
+	"github.com/Etwodev/ramchi/v2/log"
+	"github.com/Etwodev/ramchi/v2/middleware"
+	"github.com/Etwodev/ramchi/v2/router"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"

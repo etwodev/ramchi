@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	c "github.com/Etwodev/ramchi/config"
-	"github.com/Etwodev/ramchi/log"
-	"github.com/Etwodev/ramchi/middleware"
-	"github.com/Etwodev/ramchi/router"
+	c "github.com/Etwodev/ramchi/v2/config"
+	"github.com/Etwodev/ramchi/v2/log"
+	"github.com/Etwodev/ramchi/v2/middleware"
+	"github.com/Etwodev/ramchi/v2/router"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader, headers map[string]string) (*http.Response, string) {

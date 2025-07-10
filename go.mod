@@ -1,4 +1,4 @@
-module github.com/Etwodev/ramchi
+module github.com/Etwodev/ramchi/v2
 
 go 1.23.0
 

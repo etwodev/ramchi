@@ -142,7 +142,7 @@ If you require more control (e.g., middleware ordering or conditional logic), yo
 Your application can access config values via the `config` package accessor functions:
 
 ```go
-import c "github.com/etwodev/ramchi/config"
+import c "github.com/Etwodev/ramchi/v2/config"
 
 port := c.Port()                 // e.g. "7000"
 address := c.Address()           // e.g. "0.0.0.0"

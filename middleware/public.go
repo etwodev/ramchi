@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Etwodev/ramchi/log"
+	"github.com/Etwodev/ramchi/v2/log"
 )
 
 // LoggerInjectionMiddleware returns a Middleware that injects the provided logger
