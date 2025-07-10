@@ -9,6 +9,8 @@ type Router interface {
 	Routes() []Route
 	// Is the router enabled
 	Status() bool
+	// The router prefix
+	Prefix() string
 }
 
 type Route interface {

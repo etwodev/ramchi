@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 
 	c "github.com/Etwodev/ramchi/config"
 	"github.com/Etwodev/ramchi/middleware"
@@ -92,10 +93,17 @@ func (s *Server) initMux(m *chi.Mux) {
 		if router.Status() {
 			for _, r := range router.Routes() {
 				if r.Status() && (r.Experimental() == c.Experimental() || !r.Experimental()) {
-					log.Debug().Bool("Experimental", r.Experimental()).Bool("Status", r.Status()).Str("Method", r.Method()).Str("Path", r.Path()).Msg("Registering route")
-					m.Method(r.Method(), r.Path(), r.Handler())
+					fullPath := path.Join("/", router.Prefix(), r.Path())
+					log.Debug().
+						Bool("Experimental", r.Experimental()).
+						Bool("Status", r.Status()).
+						Str("Method", r.Method()).
+						Str("Path", fullPath).
+						Msg("Registering route")
+					m.Method(r.Method(), fullPath, r.Handler())
 				}
 			}
 		}
 	}
+
 }

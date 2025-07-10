@@ -56,14 +56,14 @@ func TestBasicServer(t *testing.T) {
 
 	testRoutes := func() []router.Route {
 		return []router.Route{
-			router.NewGetRoute("/ping", true, false, pingAll),
-			router.NewGetRoute("/error", true, false, errorAll),
+			router.NewGetRoute("ping", true, false, pingAll),   // No leading slash
+			router.NewGetRoute("error", true, false, errorAll), // No leading slash
 		}
 	}
 
 	testRouters := func() []router.Router {
 		return []router.Router{
-			router.NewRouter(testRoutes(), true),
+			router.NewRouter("test", testRoutes(), true), // Prefix is now "test"
 		}
 	}
 
@@ -72,12 +72,12 @@ func TestBasicServer(t *testing.T) {
 	instance := httptest.NewServer(ts.handler())
 	defer instance.Close()
 
-	if _, body := testRequest(t, instance, http.MethodGet, "/ping", nil); body != `{"success":"ping"}` {
-		t.Fatalf(body)
+	// Expect routes to be mounted under /test/
+	if _, body := testRequest(t, instance, http.MethodGet, "/test/ping", nil); body != `{"success":"ping"}` {
+		t.Fatalf("Unexpected ping response: %s", body)
 	}
 
-	
-	if _, body := testRequest(t, instance, http.MethodGet, "/error", nil); body != "I'm a teapot\u000a" {
-		t.Fatalf(body)
+	if _, body := testRequest(t, instance, http.MethodGet, "/test/error", nil); body != "I'm a teapot\n" {
+		t.Fatalf("Unexpected error response: %s", body)
 	}
 }

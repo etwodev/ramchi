@@ -6,6 +6,7 @@ import (
 
 type preRouter struct {
 	status bool
+	prefix string
 	routes []Route
 }
 
@@ -35,6 +36,11 @@ func (p preRouter) Status() bool {
 	return p.status
 }
 
+// Prefix returns the starting string of a route, e.g. /api
+func (p preRouter) Prefix() string {
+	return p.prefix
+}
+
 // Function returns the function route applies.
 func (p preRoute) Handler() http.HandlerFunc {
 	return p.handler
@@ -61,8 +67,8 @@ func (p preRoute) Experimental() bool {
 }
 
 // NewRouter initializes a new local router for the system.
-func NewRouter(routes []Route, status bool, opts ...RouterWrapper) Router {
-	var r Router = preRouter{status, routes}
+func NewRouter(prefix string, routes []Route, status bool, opts ...RouterWrapper) Router {
+	var r Router = preRouter{status, prefix, routes}
 	for _, o := range opts {
 		r = o(r)
 	}
