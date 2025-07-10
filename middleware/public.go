@@ -7,13 +7,6 @@ import (
 	"github.com/Etwodev/ramchi/log"
 )
 
-// ctxKey is a private type used as a key for storing values in context.
-// This prevents collisions with other context keys.
-type ctxKey string
-
-// loggerCtxKey is the key used to store the logger instance in the request context.
-var loggerCtxKey = ctxKey("logger")
-
 // LoggerInjectionMiddleware returns a Middleware that injects the provided logger
 // instance into the request's context. This allows downstream handlers and middleware
 // to retrieve the logger directly from the context for structured logging.
@@ -45,20 +38,10 @@ var loggerCtxKey = ctxKey("logger")
 func NewLoggingMiddleware(logger log.Logger) Middleware {
 	return NewMiddleware(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), loggerCtxKey, logger)
+			ctx := context.WithValue(r.Context(), log.LoggerCtxKey, logger)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}, "ramchi_logger_inject", true, false)
-}
-
-// LoggerFromContext retrieves the logger instance from the context.
-// Returns nil if no logger is found. Requires 'LoggerInjectionMiddleware' to
-// be consumed.
-func LoggerFromContext(ctx context.Context) log.Logger {
-	if logger, ok := ctx.Value(loggerCtxKey).(log.Logger); ok {
-		return logger
-	}
-	return nil
 }
 
 // NewCORSMiddleware returns a simple CORS middleware.
