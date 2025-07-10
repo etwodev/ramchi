@@ -1,6 +1,6 @@
 # ramchi
 
-`ramchi` is an extension to the [chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of web applications. `ramchi` focuses on developer experience while ensuring your website remains fast and responsive.
+`ramchi` is an extension to the [chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST apis. `ramchi` focuses on developer experience while ensuring your website remains fast and responsive.
 
 ---
 
@@ -8,9 +8,7 @@
 
 - Modular router and middleware loading
 - Support for feature flagging via experimental toggles
-- Unified backend and frontend serving capabilities
-- Zero-configuration TLS support
-- Structured, leveled logging powered by `zerolog`
+- Easy-config TLS support
 - Graceful shutdown and signal handling
 - Extensible helpers for requests, responses, crypto, email, and more
 
@@ -47,13 +45,13 @@ func main() {
 
 func Routers() []router.Router {
 	return []router.Router{
-		router.NewRouter("example", Routes(), true),
+		router.NewRouter("example", Routes(), true, nil),
 	}
 }
 
 func Routes() []router.Route {
 	return []router.Route{
-		router.NewGetRoute("/demo", true, false, ExampleGetHandler),
+		router.NewGetRoute("/demo", true, false, ExampleGetHandler, nil),
 	}
 }
 
