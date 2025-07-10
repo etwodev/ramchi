@@ -13,7 +13,7 @@ var c *Config
 func Load() error {
 	_, err := os.Stat(CONFIG)
 	if os.IsNotExist(err) {
-		if err := Create(); err != nil {
+		if err := Create(nil); err != nil {
 			return fmt.Errorf("Load: failed creating load: %w", err)
 		}
 	}
@@ -30,15 +30,39 @@ func Load() error {
 	return nil
 }
 
-func Create() error {
-	file, err := json.MarshalIndent(&Config{Port: "7000", Address: "0.0.0.0", Experimental: false}, "", " ")
+func Create(override *Config) error {
+	var defaultConfig Config = Config{
+		Port:                 "7000",
+		Address:              "0.0.0.0",
+		Experimental:         false,
+		ReadTimeout:          15,
+		WriteTimeout:         15,
+		IdleTimeout:          60,
+		LogLevel:             "info",
+		MaxHeaderBytes:       1048576,
+		EnableTLS:            false,
+		TLSCertFile:          "",
+		TLSKeyFile:           "",
+		ShutdownTimeout:      15,
+		EnableCORS:           false,
+		AllowedOrigins:       []string{"*"},
+		EnableRequestLogging: false,
+	}
+
+	if override != nil {
+		defaultConfig = *override
+	}
+
+	file, err := json.MarshalIndent(&defaultConfig, "", "  ")
 	if err != nil {
 		return fmt.Errorf("Create: failed marshalling config: %w", err)
 	}
+
 	err = os.WriteFile(CONFIG, file, 0644)
 	if err != nil {
 		return fmt.Errorf("Create: failed writing config: %w", err)
 	}
+
 	return nil
 }
 

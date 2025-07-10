@@ -4,112 +4,127 @@ import (
 	"net/http"
 )
 
-type preRouter struct {
-	status bool
-	prefix string
-	routes []Route
-}
+// --- Internal structs ---
 
-type preRoute struct {
+type route struct {
 	method       string
 	path         string
 	status       bool
 	experimental bool
 	handler      http.HandlerFunc
+	middleware   []func(http.Handler) http.Handler
 }
 
-// RouterWrapper wraps a router with extra functionality .
-// It is passed in when creating a new router.
-type RouterWrapper func(r Router) Router
+type router struct {
+	status     bool
+	prefix     string
+	routes     []Route
+	middleware []func(http.Handler) http.Handler
+}
 
-// RouteWrapper wraps a route with extra functionality.
-// It is passed in when creating a new route.
+// --- Route implementation ---
+
+func (r route) Handler() http.HandlerFunc {
+	return r.handler
+}
+
+func (r route) Method() string {
+	return r.method
+}
+
+func (r route) Path() string {
+	return r.path
+}
+
+func (r route) Status() bool {
+	return r.status
+}
+
+func (r route) Experimental() bool {
+	return r.experimental
+}
+
+func (r route) Middleware() []func(http.Handler) http.Handler {
+	return r.middleware
+}
+
+// --- Router implementation ---
+
+func (r router) Routes() []Route {
+	return r.routes
+}
+
+func (r router) Status() bool {
+	return r.status
+}
+
+func (r router) Prefix() string {
+	return r.prefix
+}
+
+func (r router) Middleware() []func(http.Handler) http.Handler {
+	return r.middleware
+}
+
+// --- Wrappers for extensibility ---
+
+type RouterWrapper func(r Router) Router
 type RouteWrapper func(r Route) Route
 
-// Routes returns an array of routes
-func (p preRouter) Routes() []Route {
-	return p.routes
-}
+// --- Constructors ---
 
-// Status returns whether the router should be enabled.
-func (p preRouter) Status() bool {
-	return p.status
-}
-
-// Prefix returns the starting string of a route, e.g. /api
-func (p preRouter) Prefix() string {
-	return p.prefix
-}
-
-// Function returns the function route applies.
-func (p preRoute) Handler() http.HandlerFunc {
-	return p.handler
-}
-
-// Method returns the http method that the route responds to.
-func (p preRoute) Method() string {
-	return p.method
-}
-
-// Path returns the subpath where the route responds to.
-func (p preRoute) Path() string {
-	return p.path
-}
-
-// Status returns whether the route should be enabled.
-func (p preRoute) Status() bool {
-	return p.status
-}
-
-// Experimental returns whether the route is enabled.
-func (p preRoute) Experimental() bool {
-	return p.experimental
-}
-
-// NewRouter initializes a new local router for the system.
-func NewRouter(prefix string, routes []Route, status bool, opts ...RouterWrapper) Router {
-	var r Router = preRouter{status, prefix, routes}
+// NewRouter creates a new Router with a prefix, status flag, routes, and optional middleware.
+func NewRouter(prefix string, routes []Route, status bool, middleware []func(http.Handler) http.Handler, opts ...RouterWrapper) Router {
+	var r Router = router{
+		status:     status,
+		prefix:     prefix,
+		routes:     routes,
+		middleware: middleware,
+	}
 	for _, o := range opts {
 		r = o(r)
 	}
 	return r
 }
 
-// NewRoute initializes a new local route for the router.
-func NewRoute(method string, path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	var r Route = preRoute{method, path, status, experimental, handler}
+// NewRoute creates a new Route with method, path, status, middleware, and handler.
+func NewRoute(method, path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	var r Route = route{
+		method:       method,
+		path:         path,
+		status:       status,
+		experimental: experimental,
+		handler:      handler,
+		middleware:   middleware,
+	}
 	for _, o := range opts {
 		r = o(r)
 	}
 	return r
 }
 
-// NewGetRoute initializes a new route with the http method GET.
-func NewGetRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodGet, path, status, experimental, handler, opts...)
+// --- Convenience functions for each HTTP verb ---
+
+func NewGetRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodGet, path, status, experimental, handler, middleware, opts...)
 }
 
-// NewPostRoute initializes a new route with the http method POST.
-func NewPostRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodPost, path, status, experimental, handler, opts...)
+func NewPostRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodPost, path, status, experimental, handler, middleware, opts...)
 }
 
-// NewPutRoute initializes a new route with the http method PUT.
-func NewPutRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodPut, path, status, experimental, handler, opts...)
+func NewPutRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodPut, path, status, experimental, handler, middleware, opts...)
 }
 
-// NewDeleteRoute initializes a new route with the http method DELETE.
-func NewDeleteRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodDelete, path, status, experimental, handler, opts...)
+func NewDeleteRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodDelete, path, status, experimental, handler, middleware, opts...)
 }
 
-// NewOptionsRoute initializes a new route with the http method OPTIONS.
-func NewOptionsRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodOptions, path, status, experimental, handler, opts...)
+func NewOptionsRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodOptions, path, status, experimental, handler, middleware, opts...)
 }
 
-// NewHeadRoute initializes a new route with the http method HEAD.
-func NewHeadRoute(path string, status bool, experimental bool, handler http.HandlerFunc, opts ...RouteWrapper) Route {
-	return NewRoute(http.MethodHead, path, status, experimental, handler, opts...)
+func NewHeadRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodHead, path, status, experimental, handler, middleware, opts...)
 }
