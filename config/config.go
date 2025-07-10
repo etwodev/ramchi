@@ -13,7 +13,7 @@ var c *Config
 func Load() error {
 	_, err := os.Stat(CONFIG)
 	if os.IsNotExist(err) {
-		if err := Create(); err != nil {
+		if err := Create(nil); err != nil {
 			return fmt.Errorf("Load: failed creating load: %w", err)
 		}
 	}
@@ -30,8 +30,8 @@ func Load() error {
 	return nil
 }
 
-func Create() error {
-	defaultConfig := Config{
+func Create(override *Config) error {
+	var defaultConfig Config = Config{
 		Port:                 "7000",
 		Address:              "0.0.0.0",
 		Experimental:         false,
@@ -47,6 +47,10 @@ func Create() error {
 		EnableCORS:           false,
 		AllowedOrigins:       []string{"*"},
 		EnableRequestLogging: false,
+	}
+
+	if override != nil {
+		defaultConfig = *override
 	}
 
 	file, err := json.MarshalIndent(&defaultConfig, "", "  ")

@@ -44,6 +44,26 @@ func TestBasicServer(t *testing.T) {
 	const ERROR_MESSAGE = "Example error has occurred"
 	const ERROR_RESPONSE = "test error pass-through"
 
+	defaultConfig := &c.Config{
+		Port:                 "7000",
+		Address:              "127.0.0.1",
+		Experimental:         false,
+		ReadTimeout:          15,
+		WriteTimeout:         15,
+		IdleTimeout:          60,
+		LogLevel:             "debug",
+		MaxHeaderBytes:       1048576,
+		EnableTLS:            false,
+		TLSCertFile:          "",
+		TLSKeyFile:           "",
+		ShutdownTimeout:      5,
+		EnableCORS:           true,
+		AllowedOrigins:       []string{"http://example.com"},
+		EnableRequestLogging: true,
+	}
+
+	c.Create(defaultConfig)
+
 	ts := New()
 
 	// Simulate what Start() would do — apply middlewares based on config
