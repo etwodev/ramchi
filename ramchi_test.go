@@ -62,7 +62,10 @@ func TestBasicServer(t *testing.T) {
 		EnableRequestLogging: true,
 	}
 
-	c.Create(defaultConfig)
+	err := c.Create(defaultConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ts := New()
 
