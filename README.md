@@ -1,7 +1,6 @@
 # ramchi
-`ramchi` is an extension to `chi` for rapid &amp; modular development of sites.
-It allows the user to serve both backend and frontend data inside of the same go project,
-without the need for coding any javascript (`ramchi` does all this work for you).
+`ramchi` is an extension to `chi` for rapid &amp; modular development of sites and restful applications.
+It allows modular composition of routes, with easy handler registering in a manner that is simple to use,
 `ramchi` is based upon developer experience and usage, while still making your website fast and responsive.
 
 ## Install
