@@ -93,7 +93,7 @@ type RouteWrapper func(r Route) Route
 //
 // Example:
 //
-//	r := NewRouter("api", routes, true, []func(http.Handler) http.Handler{loggingMiddleware})
+//	r := NewRouter("/api", routes, true, []func(http.Handler) http.Handler{loggingMiddleware})
 func NewRouter(prefix string, routes []Route, status bool, middleware []func(http.Handler) http.Handler, opts ...RouterWrapper) Router {
 	var r Router = router{
 		status:     status,

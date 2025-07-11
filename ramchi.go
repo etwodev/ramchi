@@ -26,7 +26,7 @@ Example usage:
 
 	func Routers() []router.Router {
 		return []router.Router{
-			router.NewRouter("example", Routes(), true, nil),
+			router.NewRouter("/example", Routes(), true, nil),
 		}
 	}
 
@@ -260,7 +260,7 @@ func (s *Server) initMux(m *chi.Mux) {
 			continue
 		}
 
-		m.Route("/"+rtr.Prefix(), func(r chi.Router) {
+		m.Route(rtr.Prefix(), func(r chi.Router) {
 			for _, rmw := range rtr.Middleware() {
 				r.Use(rmw)
 			}
@@ -270,13 +270,11 @@ func (s *Server) initMux(m *chi.Mux) {
 					continue
 				}
 
-				fullPath := "/" + rt.Path()
-
 				s.logger.Debug().
 					Bool("Experimental", rt.Experimental()).
 					Bool("Status", rt.Status()).
 					Str("Method", rt.Method()).
-					Str("Path", path.Join("/", rtr.Prefix(), rt.Path())).
+					Str("Path", path.Join(rtr.Prefix(), rt.Path())).
 					Msg("Registering route")
 
 				finalHandler := http.Handler(rt.Handler())
@@ -284,7 +282,7 @@ func (s *Server) initMux(m *chi.Mux) {
 					finalHandler = mw(finalHandler)
 				}
 
-				r.Method(rt.Method(), fullPath, finalHandler)
+				r.Method(rt.Method(), rt.Path(), finalHandler)
 			}
 		})
 	}

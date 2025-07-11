@@ -116,15 +116,15 @@ func TestBasicServer(t *testing.T) {
 	// Routes
 	testRoutes := func() []router.Route {
 		return []router.Route{
-			router.NewGetRoute("ping", true, false, pingAll, nil),
-			router.NewGetRoute("error", true, false, errorAll, nil),
+			router.NewGetRoute("/ping", true, false, pingAll, nil),
+			router.NewGetRoute("/error", true, false, errorAll, nil),
 		}
 	}
 
 	// Routers
 	testRouters := func() []router.Router {
 		return []router.Router{
-			router.NewRouter("test", testRoutes(), true, nil),
+			router.NewRouter("/test", testRoutes(), true, nil),
 		}
 	}
 	ts.LoadRouter(testRouters())
