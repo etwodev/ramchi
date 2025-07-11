@@ -1,6 +1,6 @@
 # ramchi
 
-`ramchi` is an extension to the [go-chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST APIs. `ramchi` emphasizes developer experience.
+`ramchi` is an extension to the [go-chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST APIs.
 
 ## Features
 
