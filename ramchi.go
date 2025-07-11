@@ -144,16 +144,6 @@ func (s *Server) LoadMiddleware(middlewares []middleware.Middleware) {
 //
 //	srv.Start()
 func (s *Server) Start() {
-	if c.EnableCORS() && len(c.AllowedOrigins()) > 0 {
-		corsMw := middleware.NewCORSMiddleware(c.AllowedOrigins())
-		s.LoadMiddleware([]middleware.Middleware{corsMw})
-	}
-
-	if c.EnableRequestLogging() {
-		loggingMw := middleware.NewLoggingMiddleware(s.logger)
-		s.LoadMiddleware([]middleware.Middleware{loggingMw})
-	}
-
 	s.instance = &http.Server{
 		Addr:           fmt.Sprintf("%s:%s", c.Address(), c.Port()),
 		Handler:        s.handler(),
@@ -229,6 +219,30 @@ func (s *Server) handler() *chi.Mux {
 //	mux := chi.NewMux()
 //	srv.initMux(mux)
 func (s *Server) initMux(m *chi.Mux) {
+	if c.EnableRequestLogging() {
+		middleware := middleware.NewLoggingMiddleware(s.logger)
+
+		s.logger.Debug().
+			Str("Name", middleware.Name()).
+			Bool("Experimental", middleware.Experimental()).
+			Bool("Status", middleware.Status()).
+			Msg("Registering middleware")
+
+		m.Use(middleware.Method())
+	}
+
+	if c.EnableCORS() && len(c.AllowedOrigins()) > 0 {
+		middleware := middleware.NewCORSMiddleware(c.AllowedOrigins())
+
+		s.logger.Debug().
+			Str("Name", middleware.Name()).
+			Bool("Experimental", middleware.Experimental()).
+			Bool("Status", middleware.Status()).
+			Msg("Registering middleware")
+
+		m.Use(middleware.Method())
+	}
+
 	for _, middleware := range s.middlewares {
 		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
 			s.logger.Debug().
