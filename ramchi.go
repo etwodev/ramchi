@@ -1,3 +1,49 @@
+/*
+Package ramchi provides a configurable HTTP server framework with support for
+middleware, routers, structured logging, and graceful shutdown.
+
+Example usage:
+
+	package main
+
+	import (
+		"encoding/json"
+		"net/http"
+
+		"github.com/etwodev/ramchi/v2"
+		"github.com/etwodev/ramchi/v2/router"
+	)
+
+	func main() {
+		s := ramchi.New()
+
+		// Load routers into the server
+		s.LoadRouter(Routers())
+
+		// Start the HTTP server (blocks until shutdown)
+		s.Start()
+	}
+
+	func Routers() []router.Router {
+		return []router.Router{
+			router.NewRouter("example", Routes(), true, nil),
+		}
+	}
+
+	func Routes() []router.Route {
+		return []router.Route{
+			router.NewGetRoute("/demo", true, false, ExampleGetHandler, nil),
+		}
+	}
+
+	// ExampleGetHandler is a GET handler registered at /example/demo
+	func ExampleGetHandler(w http.ResponseWriter, r *http.Request) {
+		res, _ := json.Marshal(map[string]string{"success": "ping"})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write(res)
+	}
+*/
 package ramchi
 
 import (
@@ -18,6 +64,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Server represents an HTTP server with support for
+// configuration, middleware, routers, and structured logging.
 type Server struct {
 	idle        chan struct{}
 	middlewares []middleware.Middleware
@@ -26,6 +74,14 @@ type Server struct {
 	logger      log.Logger
 }
 
+// New creates a new Server instance with configuration loaded
+// and a logger initialized.
+//
+// It will fatal exit if configuration loading fails.
+//
+// Example:
+//
+//	srv := ramchi.New()
 func New() *Server {
 	err := c.New()
 	if err != nil {
@@ -49,26 +105,50 @@ func New() *Server {
 	}
 }
 
+// Logger returns the logger instance used by the server.
+//
+// Example:
+//
+//	logger := srv.Logger()
+//	logger.Info().Msg("Server logger retrieved")
 func (s *Server) Logger() log.Logger {
 	return s.logger
 }
 
+// LoadRouter appends one or more routers to the server's router list.
+//
+// Example:
+//
+//	srv.LoadRouter([]router.Router{myRouter1, myRouter2})
 func (s *Server) LoadRouter(routers []router.Router) {
 	s.routers = append(s.routers, routers...)
 }
 
+// LoadMiddleware appends one or more middleware instances to the server's middleware chain.
+//
+// Middleware registered here will be applied globally to all routers.
+//
+// Example:
+//
+//	srv.LoadMiddleware([]middleware.Middleware{corsMw, loggingMw})
 func (s *Server) LoadMiddleware(middlewares []middleware.Middleware) {
 	s.middlewares = append(s.middlewares, middlewares...)
 }
 
+// Start launches the HTTP server, applying configured middleware and routers,
+// and listens for termination signals for graceful shutdown.
+//
+// It blocks until the server is shut down.
+//
+// Example:
+//
+//	srv.Start()
 func (s *Server) Start() {
-	// Load CORS middleware if enabled in config
 	if c.EnableCORS() && len(c.AllowedOrigins()) > 0 {
 		corsMw := middleware.NewCORSMiddleware(c.AllowedOrigins())
 		s.LoadMiddleware([]middleware.Middleware{corsMw})
 	}
 
-	// Load Logging middleware if enabled
 	if c.EnableRequestLogging() {
 		loggingMw := middleware.NewLoggingMiddleware(s.logger)
 		s.LoadMiddleware([]middleware.Middleware{loggingMw})
@@ -126,14 +206,29 @@ func (s *Server) Start() {
 		Msg("Server stopped")
 }
 
+// handler creates and returns the root chi.Mux router for the server.
+//
+// It initializes the mux with middleware and routers previously loaded.
+//
+// Example:
+//
+//	mux := srv.handler()
 func (s *Server) handler() *chi.Mux {
 	m := chi.NewMux()
 	s.initMux(m)
 	return m
 }
 
+// initMux initializes the provided chi.Mux by registering global middleware,
+// routers, and route-level middleware and handlers.
+//
+// Only middleware and routes enabled and matching the experimental config are registered.
+//
+// Example:
+//
+//	mux := chi.NewMux()
+//	srv.initMux(mux)
 func (s *Server) initMux(m *chi.Mux) {
-	// Global middleware
 	for _, middleware := range s.middlewares {
 		if middleware.Status() && (middleware.Experimental() == c.Experimental() || !middleware.Experimental()) {
 			s.logger.Debug().
@@ -146,7 +241,6 @@ func (s *Server) initMux(m *chi.Mux) {
 		}
 	}
 
-	// Routers
 	for _, rtr := range s.routers {
 		if !rtr.Status() {
 			continue

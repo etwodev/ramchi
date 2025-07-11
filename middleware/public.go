@@ -7,34 +7,29 @@ import (
 	"github.com/Etwodev/ramchi/v2/log"
 )
 
-// LoggerInjectionMiddleware returns a Middleware that injects the provided logger
-// instance into the request's context. This allows downstream handlers and middleware
-// to retrieve the logger directly from the context for structured logging.
-// If your preferred logging library is not supported, please raise an issue on this repo.
+// NewLoggingMiddleware creates a Middleware that injects the provided logger
+// into the request context. This allows downstream handlers and middleware
+// to retrieve the logger via context for structured logging.
 //
-// Usage:
+// This middleware adds the logger under the context key `log.LoggerCtxKey`.
 //
-//		// Create the logger (e.g., in main.go)
-//		myLogger := zerolog.New(format)
+// Example usage:
 //
-//		// Create the middleware
-//	 func Middlewares() []middleware.Middleware {
-//		 return []middleware.Middleware{
-//			 middleware.NewLoggingMiddleware(myLogger),
-//			 middleware.NewMiddleware(auth.Middleware(), "auth", true, false),
-//		 }
-//	 }
+//	// Initialize your logger instance (e.g., zerolog.Logger)
+//	myLogger := zerolog.New(os.Stdout)
 //
-//		// Load the middleware
-//		s.LoadMiddleware(Middlewares())
+//	// Create the logging middleware
+//	loggingMiddleware := NewLoggingMiddleware(myLogger)
 //
-//	 // In your handlers, you can retrieve the logger from the context like this:
+//	// Register middleware with your server
+//	s.LoadMiddleware([]Middleware{loggingMiddleware})
 //
-//	 func MyHandler(w http.ResponseWriter, r *http.Request) {
-//		 logger := middleware.LoggerFromContext(r.Context())
-//		 logger.Info().Msg("Handling request")
-//		 // ...
-//	 }
+//	// In an HTTP handler, retrieve the logger:
+//	func MyHandler(w http.ResponseWriter, r *http.Request) {
+//	    logger := LoggerFromContext(r.Context())
+//	    logger.Info().Msg("Handling request")
+//	    // ...
+//	}
 func NewLoggingMiddleware(logger log.Logger) Middleware {
 	return NewMiddleware(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,8 +39,20 @@ func NewLoggingMiddleware(logger log.Logger) Middleware {
 	}, "ramchi_logger_inject", true, false)
 }
 
-// NewCORSMiddleware returns a simple CORS middleware.
-// allowedOrigins is a list of origins that are allowed. Use ["*"] for allowing all.
+// NewCORSMiddleware creates a simple CORS middleware that sets appropriate
+// headers to allow cross-origin requests based on the provided allowed origins.
+//
+// Parameters:
+//   - allowedOrigins: a slice of allowed origins (e.g., []string{"https://example.com"}).
+//     Use []string{"*"} to allow all origins.
+//
+// The middleware responds to OPTIONS requests with a 200 status code immediately
+// to support CORS preflight requests.
+//
+// Example usage:
+//
+//	corsMiddleware := NewCORSMiddleware([]string{"https://example.com", "https://api.example.com"})
+//	s.LoadMiddleware([]Middleware{corsMiddleware})
 func NewCORSMiddleware(allowedOrigins []string) Middleware {
 	return NewMiddleware(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +78,7 @@ func NewCORSMiddleware(allowedOrigins []string) Middleware {
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 
-			// For OPTIONS requests, respond with 200 immediately (CORS preflight)
+			// Immediately respond to OPTIONS preflight requests
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusOK)
 				return

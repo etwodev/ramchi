@@ -8,12 +8,25 @@ import (
 	"unicode"
 )
 
-// IsEmpty returns true if the trimmed string is empty.
+// IsEmpty returns true if the input string is empty or contains only whitespace.
+//
+// Example:
+//
+//	IsEmpty("   ")  // Output: true
+//	IsEmpty("text") // Output: false
 func IsEmpty(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
 
-// Truncate shortens a string to a max length with optional ellipsis.
+// Truncate shortens the string to a maximum length `max`.
+// If the string exceeds `max` and `withEllipsis` is true, it appends "..." at the end.
+//
+// If max is less than or equal to 3, ellipsis is ignored and string is truncated strictly.
+//
+// Examples:
+//
+//	Truncate("Hello, World", 8, true)  // Output: "Hello..."
+//	Truncate("Hello", 10, true)        // Output: "Hello"
 func Truncate(s string, max int, withEllipsis bool) string {
 	if len(s) <= max {
 		return s
@@ -24,7 +37,12 @@ func Truncate(s string, max int, withEllipsis bool) string {
 	return s[:max]
 }
 
-// Slugify creates a URL-safe slug (lowercase, hyphens, alphanumeric).
+// Slugify converts a string to a URL-friendly slug:
+// lowercase, alphanumeric with words separated by hyphens.
+//
+// Example:
+//
+//	Slugify("Hello, World!")  // Output: "hello-world"
 func Slugify(s string) string {
 	s = strings.ToLower(s)
 	s = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(s, "-")
@@ -32,7 +50,16 @@ func Slugify(s string) string {
 	return s
 }
 
-// RandomString generates a random alphanumeric string of n bytes.
+// RandomString generates a random alphanumeric string of length n.
+//
+// Returns an error if the random byte generation fails.
+//
+// Example:
+//
+//	str, err := RandomString(10)
+//	if err == nil {
+//	    fmt.Println(str) // Output: e.g. "4f2a1c9b8e"
+//	}
 func RandomString(n int) (string, error) {
 	bytes := make([]byte, n)
 	_, err := rand.Read(bytes)
@@ -42,7 +69,12 @@ func RandomString(n int) (string, error) {
 	return hex.EncodeToString(bytes)[:n], nil
 }
 
-// ContainsAny checks if a string contains any of the substrings.
+// ContainsAny returns true if the string s contains any of the provided substrings.
+//
+// Example:
+//
+//	ContainsAny("hello world", "test", "world")  // Output: true
+//	ContainsAny("hello world", "test", "abc")    // Output: false
 func ContainsAny(s string, substrs ...string) bool {
 	for _, sub := range substrs {
 		if strings.Contains(s, sub) {
@@ -52,12 +84,21 @@ func ContainsAny(s string, substrs ...string) bool {
 	return false
 }
 
-// RemoveWhitespace removes all space, tab, newline characters.
+// RemoveWhitespace removes all whitespace characters (spaces, tabs, newlines) from the string.
+//
+// Example:
+//
+//	RemoveWhitespace("a b \n c\t")  // Output: "abc"
 func RemoveWhitespace(s string) string {
 	return strings.Join(strings.Fields(s), "")
 }
 
-// IsNumeric checks if string only contains digits.
+// IsNumeric returns true if the string contains only numeric digits (0-9).
+//
+// Example:
+//
+//	IsNumeric("12345")  // Output: true
+//	IsNumeric("123a5")  // Output: false
 func IsNumeric(s string) bool {
 	for _, r := range s {
 		if !unicode.IsDigit(r) {
@@ -67,7 +108,13 @@ func IsNumeric(s string) bool {
 	return true
 }
 
-// Capitalize capitalizes the first letter of a string.
+// Capitalize converts the first character of the string to uppercase,
+// leaving the rest of the string unchanged.
+//
+// Example:
+//
+//	Capitalize("hello") // Output: "Hello"
+//	Capitalize("")      // Output: ""
 func Capitalize(s string) string {
 	if s == "" {
 		return ""
@@ -77,19 +124,38 @@ func Capitalize(s string) string {
 	return string(runes)
 }
 
-// IsAlphaNumeric checks if string is alphanumeric
+// IsAlphaNumeric returns true if the string contains only letters (a-z, A-Z) and digits (0-9).
+//
+// Example:
+//
+//	IsAlphaNumeric("abc123")  // Output: true
+//	IsAlphaNumeric("abc_123") // Output: false
 func IsAlphaNumeric(s string) bool {
 	re := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 	return re.MatchString(s)
 }
 
-// IsSlug checks if string is URL slug friendly
+// IsSlug returns true if the string is a valid URL slug containing only lowercase letters,
+// digits, and hyphens.
+//
+// Example:
+//
+//	IsSlug("my-slug-123")  // Output: true
+//	IsSlug("My_Slug")      // Output: false
 func IsSlug(s string) bool {
 	re := regexp.MustCompile(`^[a-z0-9\-]+$`)
 	return re.MatchString(s)
 }
 
-// IsStrongPassword performs basic password strength check
+// IsStrongPassword performs a basic password strength check.
+//
+// The password must be at least 8 characters and contain at least one uppercase letter,
+// one number, and one symbol from !@#~$%^&*()+|_
+//
+// Example:
+//
+//	IsStrongPassword("Passw0rd!") // Output: true
+//	IsStrongPassword("password")  // Output: false
 func IsStrongPassword(p string) bool {
 	length := len(p) >= 8
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(p)

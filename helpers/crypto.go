@@ -10,26 +10,63 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// HashPassword hashes using bcrypt
+// HashPassword hashes the provided plaintext password using bcrypt algorithm.
+//
+// It returns the hashed password string and any error encountered during hashing.
+//
+// Example:
+//
+//	hash, err := HashPassword("mysecretpassword")
+//	if err != nil {
+//	    // handle error
+//	}
+//	fmt.Println(hash) // Output: $2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36G1e15Ny5rQmj.LrZIvVbG
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
-// CheckPassword compares hash with plain
+// CheckPassword compares a bcrypt hashed password with its possible plaintext equivalent.
+//
+// Returns true if the password matches the hash, false otherwise.
+//
+// Example:
+//
+//	valid := CheckPassword("$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36G1e15Ny5rQmj.LrZIvVbG", "mysecretpassword")
+//	fmt.Println(valid) // Output: true
 func CheckPassword(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
-// HMACSHA256 generates HMAC
+// HMACSHA256 generates a base64-encoded HMAC using SHA-256 for the given data and secret key.
+//
+// It returns the resulting HMAC string.
+//
+// Example:
+//
+//	hmac := HMACSHA256("mysecretkey", "data to protect")
+//	fmt.Println(hmac) // Output: "XUFAKrxLKna5cZ2REBfFkg=="
 func HMACSHA256(secret, data string) string {
 	h := hmac.New(sha256.New, []byte(secret))
 	h.Write([]byte(data))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-// GenerateOTP generates a random OTP string based on a given length
+// GenerateOTP generates a random OTP (One-Time Password) string of the specified length,
+// using characters from the provided charset.
+//
+// If charset is empty, it defaults to "23456789ABCDEFGHJKLMNPQRSTUVWXYZ".
+//
+// Returns an error if length is zero or negative, or if random generation fails.
+//
+// Example:
+//
+//	otp, err := GenerateOTP(6, "")
+//	if err != nil {
+//	    // handle error
+//	}
+//	fmt.Println(otp) // Output: "7G4K2H"
 func GenerateOTP(length int, charset string) (string, error) {
 	if length <= 0 {
 		return "", fmt.Errorf("GenerateOTP: length must be > 0")

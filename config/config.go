@@ -10,11 +10,24 @@ const CONFIG = "./ramchi.config.json"
 
 var c *Config
 
+// Load reads the configuration file from disk, parses the JSON content,
+// and loads it into the package-level Config variable `c`.
+//
+// If the config file does not exist, it will attempt to create one with default values.
+//
+// Returns an error if reading or unmarshalling the file fails.
+//
+// Example usage:
+//
+//	err := config.Load()
+//	if err != nil {
+//	    // handle error
+//	}
 func Load() error {
 	_, err := os.Stat(CONFIG)
 	if os.IsNotExist(err) {
 		if err := Create(nil); err != nil {
-			return fmt.Errorf("Load: failed creating load: %w", err)
+			return fmt.Errorf("Load: failed creating config: %w", err)
 		}
 	}
 
@@ -25,13 +38,23 @@ func Load() error {
 
 	err = json.Unmarshal(file, &c)
 	if err != nil {
-		return fmt.Errorf("Load: failed marshalling json: %w", err)
+		return fmt.Errorf("Load: failed unmarshalling json: %w", err)
 	}
 	return nil
 }
 
+// Create writes a configuration file with either default values or
+// overrides provided by the user.
+//
+// The file is written in JSON format with indentation for readability.
+//
+// Returns an error if marshaling or writing to the file fails.
+//
+// Example usage:
+//
+//	err := config.Create(&config.Config{Port: "8080"})
 func Create(override *Config) error {
-	var defaultConfig Config = Config{
+	defaultConfig := Config{
 		Port:                 "7000",
 		Address:              "0.0.0.0",
 		Experimental:         false,
@@ -66,6 +89,17 @@ func Create(override *Config) error {
 	return nil
 }
 
+// New initializes the package configuration by loading the config file,
+// if it hasn't already been loaded.
+//
+// Returns an error if loading the configuration fails.
+//
+// Example usage:
+//
+//	err := config.New()
+//	if err != nil {
+//	    // handle error
+//	}
 func New() error {
 	if c == nil {
 		err := Load()
