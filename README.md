@@ -1,20 +1,25 @@
 # ramchi
 
-`ramchi` is an extension to the [chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST apis. `ramchi` focuses on developer experience while ensuring your website remains fast and responsive.
+`ramchi` is an extension to the [go-chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST APIs. `ramchi` emphasizes developer experience.
 
 ---
 
 ## Features
 
-- Modular router and middleware loading
-- Support for feature flagging via experimental toggles
-- Easy-config TLS support
-- Graceful shutdown and signal handling
-- Extensible helpers for requests, responses, crypto, email, and more
+- Modular router and middleware loading system
+- Feature flag support via experimental toggles for safe progressive rollout
+- Easy-to-configure TLS/HTTPS support
+- Graceful shutdown and OS signal handling for clean service termination
+- Built-in, extensible helper packages for requests, responses, crypto, email, and more
+- Automatic configuration file generation and hot loading
+- Integrated structured logging powered by [zerolog](https://github.com/rs/zerolog)
+- Toggle middleware globally via configuration, reducing boilerplate
 
 ---
 
 ## Installation
+
+Use Go Modules to install:
 
 ```bash
 go get -u github.com/etwodev/ramchi
@@ -24,17 +29,17 @@ go get -u github.com/etwodev/ramchi
 
 ## Getting Started
 
-ramchi allows easy, modular registration of endpoints through grouping.
-
-Create a new server instance and start it:
+Below is a minimal example demonstrating how to create and start a `ramchi` server with a modular router and endpoint registration.
 
 ```go
 package main
 
 import (
-  "github.com/etwodev/ramchi"
-  "encoding/json"
+	"encoding/json"
 	"net/http"
+
+	"github.com/etwodev/ramchi"
+	"github.com/etwodev/ramchi/router"
 )
 
 func main() {
@@ -43,36 +48,39 @@ func main() {
 	s.Start()
 }
 
+// Define routers with their prefixes and routes
 func Routers() []router.Router {
 	return []router.Router{
 		router.NewRouter("example", Routes(), true, nil),
 	}
 }
 
+// Define individual routes for the router
 func Routes() []router.Route {
 	return []router.Route{
 		router.NewGetRoute("/demo", true, false, ExampleGetHandler, nil),
 	}
 }
 
-// This route will be a GET endpoint registered at /example/demo
+// ExampleGetHandler handles GET /example/demo requests
 func ExampleGetHandler(w http.ResponseWriter, r *http.Request) {
-  res, _ := json.Marshal(map[string]string{"success": "ping"})
-  w.Header().Set("Content-Type", "application/json")
-  w.WriteHeader(201)
-  if _, err := w.Write(res); err != nil {
-    t.Fatal(err)
-  }
+	res, _ := json.Marshal(map[string]string{"success": "ping"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if _, err := w.Write(res); err != nil {
+		// Handle write error (in production, use proper error logging)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 ```
 
-On the first run, `ramchi` will automatically generate a default `ramchi.config.json` file in your working directory.
+> **Note:** On the first run, `ramchi` auto-generates a default `ramchi.config.json` file in your working directory, which you can customize as needed.
 
 ---
 
 ## Configuration
 
-The `ramchi.config.json` file controls server behavior and feature toggling.
+The behavior of the server and feature toggling is controlled by the `ramchi.config.json` file.
 
 ### Default Configuration Example
 
@@ -105,105 +113,171 @@ The `ramchi.config.json` file controls server behavior and feature toggling.
 | `experimental`         | bool      | Enables or disables experimental feature flags                              | `false`     |
 | `logLevel`             | string    | Log verbosity level (`debug`, `info`, `warn`, `error`, `fatal`, `disabled`) | `"info"`    |
 | `enableTLS`            | bool      | Enable HTTPS by providing TLS certificate and key                           | `false`     |
-| `tlsCertFile`          | string    | Path to TLS certificate file (required if `enableTLS` is true)              | `""`        |
-| `tlsKeyFile`           | string    | Path to TLS key file (required if `enableTLS` is true)                      | `""`        |
-| `readTimeout`          | int       | Maximum duration (in seconds) for reading the request                       | `15`        |
-| `writeTimeout`         | int       | Maximum duration (in seconds) before timing out response writes             | `15`        |
-| `idleTimeout`          | int       | Maximum duration (in seconds) to keep idle connections open                 | `60`        |
-| `maxHeaderBytes`       | int       | Maximum size of request headers in bytes                                    | `1048576`   |
-| `shutdownTimeout`      | int       | Time (in seconds) allowed for graceful shutdown                             | `15`        |
-| `enableCORS`           | bool      | Automatically enables CORS middleware                                       | `false`     |
-| `allowedOrigins`       | \[]string | List of allowed CORS origins (e.g., `["*"]`, `["https://example.com"]`)     | `["*"]`     |
-| `enableRequestLogging` | bool      | Automatically enables HTTP request logging middleware                       | `false`     |
+| `tlsCertFile`          | string    | Path to TLS certificate file (required if `enableTLS` is `true`)            | `""`        |
+| `tlsKeyFile`           | string    | Path to TLS key file (required if `enableTLS` is `true`)                    | `""`        |
+| `readTimeout`          | int       | Max seconds allowed to read incoming requests                               | `15`        |
+| `writeTimeout`         | int       | Max seconds allowed to write responses                                      | `15`        |
+| `idleTimeout`          | int       | Max seconds to keep idle HTTP connections open                              | `60`        |
+| `maxHeaderBytes`       | int       | Maximum size in bytes for HTTP headers                                      | `1048576`   |
+| `shutdownTimeout`      | int       | Timeout in seconds for graceful server shutdown                             | `15`        |
+| `enableCORS`           | bool      | Automatically enables Cross-Origin Resource Sharing (CORS) middleware       | `false`     |
+| `allowedOrigins`       | \[]string | List of allowed origins for CORS (e.g., `["*"]`, `["https://example.com"]`) | `["*"]`     |
+| `enableRequestLogging` | bool      | Enables HTTP request logging middleware globally                            | `false`     |
 
 ---
 
 ## Togglable Middleware
 
-You can enable built-in middleware through the config file without registering them manually.
+Enable built-in middleware globally using config flags without manual registration:
 
-### Available Middleware
+| Middleware          | Config Flag            | Description                                      |
+| ------------------- | ---------------------- | ------------------------------------------------ |
+| **CORS**            | `enableCORS`           | Adds permissive or restricted CORS headers       |
+| **Request Logging** | `enableRequestLogging` | Logs incoming HTTP requests with structured logs |
 
-| Middleware          | Config Flag            | Description                                                     |
-| ------------------- | ---------------------- | --------------------------------------------------------------- |
-| **CORS**            | `enableCORS`           | Adds a permissive or origin-restricted CORS layer               |
-| **Request Logging** | `enableRequestLogging` | Logs all incoming HTTP requests using structured logging format |
-
-These are injected globally before any custom middleware or routes.
-
-If you require more control (e.g., middleware ordering or conditional logic), you can still register them manually through the `LoadMiddleware()` method.
+> For fine-grained control (middleware order, conditional logic), register middleware manually using `LoadMiddleware()`.
 
 ---
 
-## Using the Configuration in Code
+## Accessing Configuration in Code
 
-Your application can access config values via the `config` package accessor functions:
+You can access configuration values in your application via the `config` package:
 
 ```go
-import c "github.com/Etwodev/ramchi/v2/config"
+import c "github.com/etwodev/ramchi/v2/config"
 
-port := c.Port()                 // e.g. "7000"
-address := c.Address()           // e.g. "0.0.0.0"
+port := c.Port()           // e.g. "7000"
+addr := c.Address()        // e.g. "0.0.0.0"
+
 if c.Experimental() {
-    // Enable experimental features
+	// Enable or disable experimental features accordingly
 }
-level := c.LogLevel()            // e.g. "debug"
+
 if c.EnableTLS() {
-    cert := c.TLSCertFile()
-    key := c.TLSKeyFile()
-    // Use cert and key to start HTTPS server
+	cert := c.TLSCertFile()
+	key := c.TLSKeyFile()
+	// Use cert and key for HTTPS server setup
 }
 ```
-
-The server internally uses these config values to set up logging, timeouts, TLS, and feature flags.
 
 ---
 
 ## Logging
 
-`ramchi` integrates [zerolog](https://github.com/rs/zerolog) for structured, leveled logging with console-friendly output by default. However, logging can be replaced. If you would like a specific package to be supported, please raise an issue.
+`ramchi` integrates [zerolog](https://github.com/rs/zerolog) for structured, leveled logging:
 
-* Log verbosity is controlled by the `logLevel` config (e.g., `debug`, `info`, `disabled`).
-* Logs include contextual fields such as the server group, function names, HTTP method, route path, and middleware names.
-* Graceful shutdown logs warnings and fatal errors as appropriate.
+* Log levels controlled via `logLevel` config (`debug`, `info`, `warn`, `error`, `fatal`, `disabled`)
+* Console-friendly output by default, but pluggable to other loggers if needed
+* Logs contextual information: server name, HTTP method, route, middleware names, error stack traces
+* Logs graceful shutdown steps, warnings, and fatal errors
 
 ---
 
-## Middleware & Routing
+## Middleware & Routing Best Practices
 
-* Load your middlewares and routers modularly before starting the server.
-* `ramchi` respects middleware and route `Experimental` flags based on your config.
-* Routes and middleware with disabled status or mismatched experimental flags are skipped.
+* Organize routes modularly using `router.Router` instances grouped by prefixes.
+* Respect feature flags by setting the `Experimental` flag on routes/middleware.
+* Use middleware chaining to add cross-cutting concerns like authentication, CORS, logging.
+* Use the status flag to disable routes/middleware temporarily without deleting code.
 
 ---
 
 ## TLS Support
 
-Set `enableTLS` to `true` and provide valid paths to `tlsCertFile` and `tlsKeyFile` in your config to serve HTTPS.
+To serve over HTTPS:
+
+1. Set `"enableTLS": true` in `ramchi.config.json`.
+2. Provide valid paths to `"tlsCertFile"` and `"tlsKeyFile"` for your SSL certificate and private key.
+3. Restart your server.
+
+`ramchi` will handle HTTPS setup automatically.
 
 ---
 
-## Extending Helpers
+## Extending ramchi with Helpers
 
-`ramchi` ships with helper packages for common tasks:
+`ramchi` includes utility helper packages to accelerate development:
 
-* `helpers/request.go`: HTTP request utilities (e.g., extracting IP, URL params)
-* `helpers/response.go`: Response helpers for JSON encoding, error handling
-* `helpers/crypto.go`: Crypto utilities (hashing, encryption helpers)
-* `helpers/email.go`: Email sending and templating helpers
-* `helpers/strings.go`: String manipulation utilities (e.g., truncation, padding, sanitization)
-* `helpers/encoding.go`: Encoding utilities (e.g., toHex, toBase64)
+| Helper Package        | Description                                                |
+| --------------------- | ---------------------------------------------------------- |
+| `helpers/request.go`  | Utilities for HTTP requests (client IP extraction, params) |
+| `helpers/response.go` | JSON encoding, error handling, standardized responses      |
+| `helpers/crypto.go`   | Cryptographic helpers: hashing, encryption utilities       |
+| `helpers/email.go`    | Email templating and sending utilities                     |
+| `helpers/strings.go`  | String manipulation (padding, truncation, sanitization)    |
+| `helpers/encoding.go` | Encoding helpers (hex, base64 conversions)                 |
 
-You are encouraged to extend these helper packages or create your own.
+Feel free to extend or create your own helper packages and contribute back.
 
 ---
 
-## Contributing
+## Contribution Guidelines
 
-Contributions and suggestions are welcome. Please open issues or pull requests on the [GitHub repository](https://github.com/etwodev/ramchi).
+Contributions, feature requests, and bug reports are welcome! Please:
+
+* Fork the repository
+* Create a feature branch (`git checkout -b feature-name`)
+* Write tests for your changes
+* Submit a Pull Request describing your improvements
+* Open issues for discussion before implementing breaking changes
+
+See the [GitHub repository](https://github.com/etwodev/ramchi) for more details.
+
+---
+
+## Example Advanced Usage
+
+Here's an example of grouping multiple routers and adding middleware:
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"github.com/etwodev/ramchi"
+	"github.com/etwodev/ramchi/router"
+)
+
+func main() {
+	s := ramchi.New()
+
+	// Load global middleware
+	s.LoadMiddleware([]func(http.Handler) http.Handler{
+		loggingMiddleware,
+	})
+
+	// Load routers modularly
+	s.LoadRouter([]router.Router{
+		router.NewRouter("api/v1", apiV1Routes(), true, []func(http.Handler) http.Handler{authMiddleware}),
+		router.NewRouter("admin", adminRoutes(), true, nil),
+	})
+
+	s.Start()
+}
+
+func apiV1Routes() []router.Route {
+	return []router.Route{
+		router.NewGetRoute("/users", true, false, usersHandler, nil),
+		router.NewPostRoute("/users", true, false, createUserHandler, nil),
+	}
+}
+
+func adminRoutes() []router.Route {
+	return []router.Route{
+		router.NewGetRoute("/dashboard", true, false, adminDashboardHandler, nil),
+	}
+}
+```
+---
+
+## Contact and Support
+
+For questions, discussions, or support, please open an issue.
 
 ---
 
 ## License
 
 MIT License © Etwodev
+
