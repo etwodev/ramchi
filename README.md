@@ -2,8 +2,6 @@
 
 `ramchi` is an extension to the [go-chi](https://github.com/go-chi/chi) HTTP router designed for rapid and modular development of REST APIs. `ramchi` emphasizes developer experience.
 
----
-
 ## Features
 
 - Modular router and middleware loading system
@@ -15,8 +13,6 @@
 - Integrated structured logging powered by [zerolog](https://github.com/rs/zerolog)
 - Toggle middleware globally via configuration, reducing boilerplate
 
----
-
 ## Installation
 
 Use Go Modules to install:
@@ -24,8 +20,6 @@ Use Go Modules to install:
 ```bash
 go get -u github.com/etwodev/ramchi
 ```
-
----
 
 ## Getting Started
 
@@ -76,8 +70,6 @@ func ExampleGetHandler(w http.ResponseWriter, r *http.Request) {
 
 > **Note:** On the first run, `ramchi` auto-generates a default `ramchi.config.json` file in your working directory, which you can customize as needed.
 
----
-
 ## Configuration
 
 The behavior of the server and feature toggling is controlled by the `ramchi.config.json` file.
@@ -124,8 +116,6 @@ The behavior of the server and feature toggling is controlled by the `ramchi.con
 | `allowedOrigins`       | \[]string | List of allowed origins for CORS (e.g., `["*"]`, `["https://example.com"]`) | `["*"]`     |
 | `enableRequestLogging` | bool      | Enables HTTP request logging middleware globally                            | `false`     |
 
----
-
 ## Togglable Middleware
 
 Enable built-in middleware globally using config flags without manual registration:
@@ -136,8 +126,6 @@ Enable built-in middleware globally using config flags without manual registrati
 | **Request Logging** | `enableRequestLogging` | Logs incoming HTTP requests with structured logs |
 
 > For fine-grained control (middleware order, conditional logic), register middleware manually using `LoadMiddleware()`.
-
----
 
 ## Accessing Configuration in Code
 
@@ -160,8 +148,6 @@ if c.EnableTLS() {
 }
 ```
 
----
-
 ## Logging
 
 `ramchi` integrates [zerolog](https://github.com/rs/zerolog) for structured, leveled logging:
@@ -171,16 +157,12 @@ if c.EnableTLS() {
 * Logs contextual information: server name, HTTP method, route, middleware names, error stack traces
 * Logs graceful shutdown steps, warnings, and fatal errors
 
----
-
 ## Middleware & Routing Best Practices
 
 * Organize routes modularly using `router.Router` instances grouped by prefixes.
 * Respect feature flags by setting the `Experimental` flag on routes/middleware.
 * Use middleware chaining to add cross-cutting concerns like authentication, CORS, logging.
 * Use the status flag to disable routes/middleware temporarily without deleting code.
-
----
 
 ## TLS Support
 
@@ -191,8 +173,6 @@ To serve over HTTPS:
 3. Restart your server.
 
 `ramchi` will handle HTTPS setup automatically.
-
----
 
 ## Extending ramchi with Helpers
 
@@ -209,8 +189,6 @@ To serve over HTTPS:
 
 Feel free to extend or create your own helper packages and contribute back.
 
----
-
 ## Contribution Guidelines
 
 Contributions, feature requests, and bug reports are welcome! Please:
@@ -221,13 +199,10 @@ Contributions, feature requests, and bug reports are welcome! Please:
 * Submit a Pull Request describing your improvements
 * Open issues for discussion before implementing breaking changes
 
-See the [GitHub repository](https://github.com/etwodev/ramchi) for more details.
-
----
-
 ## Example Advanced Usage
 
-Here's an example of grouping multiple routers and adding middleware:
+Here's an example of grouping multiple routers and adding middleware.
+Of course, in reality, you would put your routes in a separate package for brevity:
 
 ```go
 package main
@@ -235,25 +210,30 @@ package main
 import (
 	"net/http"
 
+	"github.com/example/project/middleware/logger"
+
 	"github.com/etwodev/ramchi"
 	"github.com/etwodev/ramchi/router"
 )
 
 func main() {
 	s := ramchi.New()
-
-	// Load global middleware
-	s.LoadMiddleware([]func(http.Handler) http.Handler{
-		loggingMiddleware,
-	})
-
-	// Load routers modularly
-	s.LoadRouter([]router.Router{
-		router.NewRouter("api/v1", apiV1Routes(), true, []func(http.Handler) http.Handler{authMiddleware}),
-		router.NewRouter("admin", adminRoutes(), true, nil),
-	})
-
+	s.LoadMiddleware(Middlewares())
+	s.LoadRouter(Routers())
 	s.Start()
+}
+
+func Routers() []router.Router {
+	return []router.Router{
+		router.NewRouter("api/v1", apiV1Routes(), true, nil),
+		router.NewRouter("admin", adminRoutes(), true, nil),
+	}
+}
+
+func Middlewares() []middleware.Middleware {
+	return []middleware.Middleware{
+		middleware.NewMiddleware(logger.Middleware(), "logger", true, false),
+	}
 }
 
 func apiV1Routes() []router.Route {
@@ -269,13 +249,10 @@ func adminRoutes() []router.Route {
 	}
 }
 ```
----
 
 ## Contact and Support
 
 For questions, discussions, or support, please open an issue.
-
----
 
 ## License
 
