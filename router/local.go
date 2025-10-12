@@ -167,6 +167,15 @@ func NewDeleteRoute(path string, status, experimental bool, handler http.Handler
 	return NewRoute(http.MethodDelete, path, status, experimental, handler, middleware, opts...)
 }
 
+// NewPatchRoute creates a new PATCH Route.
+//
+// Example:
+//
+//	r := NewPatchRoute("/users/{id}", true, false, patchUserHandler, nil)
+func NewPatchRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodPatch, path, status, experimental, handler, middleware, opts...)
+}
+
 // NewOptionsRoute creates a new OPTIONS Route.
 //
 // Example:
@@ -183,4 +192,22 @@ func NewOptionsRoute(path string, status, experimental bool, handler http.Handle
 //	r := NewHeadRoute("/users", true, false, headHandler, nil)
 func NewHeadRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
 	return NewRoute(http.MethodHead, path, status, experimental, handler, middleware, opts...)
+}
+
+// NewConnectRoute creates a new CONNECT Route.
+//
+// Example:
+//
+//	r := NewConnectRoute("/users/{id}", true, false, connectHandler, nil)
+func NewConnectRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodConnect, path, status, experimental, handler, middleware, opts...)
+}
+
+// NewTraceRoute creates a new TRACE Route.
+//
+// Example:
+//
+//	r := NewTraceRoute("/users/{id}", true, false, traceHandler, nil)
+func NewTraceRoute(path string, status, experimental bool, handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, opts ...RouteWrapper) Route {
+	return NewRoute(http.MethodTrace, path, status, experimental, handler, middleware, opts...)
 }
